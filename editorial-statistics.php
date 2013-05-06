@@ -25,6 +25,9 @@ class Editorial_Statistics {
 	/** @type array Available report columns */
 	public $report_columns = array( 'author', 'content_type', 'term' );
 	
+	/** @type array Predefined date ranges */
+	public $date_ranges = array( 'Yesterday', 'Week to Date', 'This Month', 'Last Month' );
+	
 	/** @type string Screen ID */
 	private $screen_id = 'tools_page_editorial-statistics'; 
 	
@@ -200,6 +203,29 @@ class Editorial_Statistics {
 							<th scope="row">
 								<label for="<?php echo $this->prefix ?>_report_columns">
 									<div>
+										<b><?php _e( 'Predefined Date Ranges', $this->i18n ) ?></b>
+									</div>
+									<div><?php _e( 'Choose a predefined date range for the report.', $this->i18n ) ?></div>
+								</label>
+							</th>
+							<td>
+								<?php 
+									$date_range_output = array();
+									foreach( $this->date_ranges as $date_range ) {
+										$date_range_output[] = sprintf(
+											'<a href="#" class="editorial-statistics-date-range" data-range="%s">%s</a>',
+											strtolower( str_replace( ' ', '_', $date_range ) ),
+											__( $date_range, $this->i18n )
+										);
+									}
+									echo implode( '&nbsp;&nbsp;|&nbsp;&nbsp;', $date_range_output );
+								?>
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								<label for="<?php echo $this->prefix ?>_report_columns">
+									<div>
 										<b><?php _e( 'Report Columns', $this->i18n ) ?></b>
 									</div>
 									<div><?php _e( 'Choose the columns to display in the report (at least one is required).', $this->i18n ) ?></div>
@@ -210,7 +236,7 @@ class Editorial_Statistics {
 									<?php 
 										// TODO - test logic here to select checkboxes when the report page refreshes to load the report
 										echo sprintf(
-											'<input type="checkbox" value="%s" name="%s_report_columns[]" id="%s_report_columns_%s" class="postform" %s />',
+											'<input type="checkbox" value="%s" name="%sreport_columns[]" id="%sreport_columns_%s" class="postform" %s />',
 											$report_column,
 											$this->prefix,
 											$this->prefix,
@@ -235,9 +261,10 @@ class Editorial_Statistics {
 							<td>
 								<?php 
 									echo sprintf(
-										'<select multiple="multiple" class="chzn-select" name="%s" id="%s">%s</select>',
+										'<select multiple="multiple" class="chzn-select" name="%s" id="%s" data-placeholder="%s">%s</select>',
 										$this->prefix . 'terms',
 										$this->prefix . 'terms',
+										__( 'Select Taxonomies' ),
 										$this->get_taxonomy_options()
 									);
 								?>

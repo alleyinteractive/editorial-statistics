@@ -1,7 +1,11 @@
-/*.editorial-statistics-filter {
+.editorial-statistics-filter {
 	display: none;
-}*/
+}
 
 #editorial_statistics_terms_chzn {
-	width: 170px !important;
+	width: 250px !important;
+}
+
+#editorial_statistics_terms_chzn input {
+	width: 240px !important;
 }
