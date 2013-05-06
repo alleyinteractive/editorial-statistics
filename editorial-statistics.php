@@ -24,7 +24,10 @@ class Editorial_Statistics {
 	
 	/** @type array Available report columns */
 	public $report_columns = array( 'author', 'content_type', 'term' );
-
+	
+	/** @type string Screen ID */
+	private $screen_id = 'tools_page_editorial-statistics'; 
+	
 
 	/**
 	 * Constructor
@@ -108,11 +111,28 @@ class Editorial_Statistics {
 	 * @return void
 	 */
 	public function enqueue_scripts() {
-		// Enqueue the plugin script
-		wp_enqueue_script( $this->prefix . 'js', plugin_dir_url( __FILE__ ) . "js/editorial-statistics.js", false, '1.0', true );
+		// Only enqueue the scripts for the Editorial Statistics report screen
+		$screen = get_current_screen();
+
+		if ( $screen->id == $this->screen_id ) {
+			// Enqueue and localize variables used by the plugin script
+			wp_enqueue_script( $this->prefix . 'js', plugin_dir_url( __FILE__ ) . 'js/editorial-statistics.js', false, '1.0', true );
+			$settings = array(
+				'prefix'    => $this->prefix
+			);
+			wp_localize_script( $this->prefix . 'js', $this->i18n, $settings );
+			
+			// Add chosen.js for the taxonomy selection field
+			wp_enqueue_script( 'chosen', plugin_dir_url( __FILE__ ) . 'js/chosen/chosen.jquery.min.js', false, '1.0', true );
+			wp_enqueue_style( 'chosen_css', plugin_dir_url( __FILE__ ) . 'js/chosen/chosen.css', false, '1.0' );
 		
-		// Enqueue other required built-in scripts
-		wp_enqueue_script( 'jquery-ui-datepicker' );
+			// Enqueue the plugin styles
+			wp_enqueue_style( $this->prefix . 'css', plugin_dir_url( __FILE__ ) . 'css/editorial-statistics.css', false, '1.0' );
+			wp_enqueue_style( 'jquery.ui.theme', plugin_dir_url( __FILE__ ) . 'css/jquery-ui/jquery-ui-1.10.3.custom.css', false, '1.10.3' );
+		
+			// Include the jquery datepicker for the report date range
+			wp_enqueue_script( 'jquery-ui-datepicker' );
+		}
 	}
 	
 	
@@ -148,6 +168,38 @@ class Editorial_Statistics {
 							<th scope="row">
 								<label for="<?php echo $this->prefix ?>_report_columns">
 									<div>
+										<b><?php _e( 'Start Date', $this->i18n ) ?></b>
+									</div>
+									<div><?php _e( 'Choose the start date for the report.', $this->i18n ) ?></div>
+								</label>
+							</th>
+							<td>
+								<?php 
+									// TODO - some logic here to select date when report page refreshes 
+								?>
+								<input type="text" name="<?php echo $this->prefix ?>start_date" id="<?php echo $this->prefix ?>start_date" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								<label for="<?php echo $this->prefix ?>_report_columns">
+									<div>
+										<b><?php _e( 'End Date', $this->i18n ) ?></b>
+									</div>
+									<div><?php _e( 'Choose the end date for the report.', $this->i18n ) ?></div>
+								</label>
+							</th>
+							<td>
+								<?php 
+									// TODO - some logic here to select date when report page refreshes 
+								?>
+								<input type="text" name="<?php echo $this->prefix ?>end_date" id="<?php echo $this->prefix ?>end_date" />
+							</td>
+						</tr>
+						<tr valign="top">
+							<th scope="row">
+								<label for="<?php echo $this->prefix ?>_report_columns">
+									<div>
 										<b><?php _e( 'Report Columns', $this->i18n ) ?></b>
 									</div>
 									<div><?php _e( 'Choose the columns to display in the report (at least one is required).', $this->i18n ) ?></div>
@@ -155,32 +207,80 @@ class Editorial_Statistics {
 							</th>
 							<td>
 								<?php foreach( $this->report_columns as $report_column ): ?>
-									<label>
-										<?php 
-											echo sprintf(
-												'<input type="checkbox" value="%s" name="%s_report_columns[]" id="%s_report_columns_%s" class="postform" %s />',
-												$report_column,
-												$this->prefix,
-												$this->prefix,
-												$report_column,
-												( isset( $_POST[$this->prefix . '_report_columns'] ) && in_array( $report_columm, $_POST[$this->prefix . '_report_columns'] ) ) ? ' checked="checked"' : ''
-											);
-										?>
-										<?php _e( ucwords( str_replace( '_', ' ', $report_column ) ), $this->i18n ) ?>
-									</label>
+									<?php 
+										// TODO - test logic here to select checkboxes when the report page refreshes to load the report
+										echo sprintf(
+											'<input type="checkbox" value="%s" name="%s_report_columns[]" id="%s_report_columns_%s" class="postform" %s />',
+											$report_column,
+											$this->prefix,
+											$this->prefix,
+											$report_column,
+											( isset( $_POST[$this->prefix . '_report_columns'] ) && in_array( $report_columm, $_POST[$this->prefix . '_report_columns'] ) ) ? ' checked="checked"' : ''
+										);
+									?>
+									<?php _e( ucwords( str_replace( '_', ' ', $report_column ) ), $this->i18n ) ?>
 									<br />
 								<?php endforeach; ?>
+							</td>
+						</tr>
+						<tr valign="top" id="<?php echo $this->prefix ?>terms_wrapper" class="editorial-statistics-filter" >
+							<th scope="row">
+								<label for="<?php echo $this->prefix ?>terms">
+									<div>
+										<b><?php _e( 'Choose Taxonomies' ) ?></b>
+									</div>
+									<div><?php _e( 'Choose which taxonomies should be included in the term column (at least one is required).', $this->i18n ) ?></div>
+								</label>
+							</th>
+							<td>
+								<?php 
+									echo sprintf(
+										'<select multiple="multiple" class="chzn-select" name="%s" id="%s">%s</select>',
+										$this->prefix . 'terms',
+										$this->prefix . 'terms',
+										$this->get_taxonomy_options()
+									);
+								?>
 							</td>
 						</tr>
 					</table>
 	
 					<p class="submit">
-						<?php submit_button( null, 'primary', $this->prefix . 'submit', false ); ?>
+						<?php submit_button( __( 'Create Report' ), 'primary', $this->prefix . 'submit', false ); ?>
 					</p>
 	
 				</form>
 			</div>
 		<?php
+	}
+	
+	
+	/**
+	 * Builds the list of options for the taxonomy selection field
+	 * 
+	 * @access private
+	 * @return string
+	 */
+	private function get_taxonomy_options() {
+		// Initialize the container for the taxonomy options list
+		$taxonomy_options = '';
+
+		// Get the list of available taxonomies.
+		// Just return an empty string if this blank for some reason.
+		$taxonomies = $this->get_taxonomies();
+		if ( empty( $taxonomies ) || !is_array( $taxonomies ) )
+			return $taxonomy_options;
+			
+		foreach( $taxonomies as $taxonomy ) {
+			$taxonomy_options .= sprintf(
+				'<option value="%s" %s>%s</option>',
+				$taxonomy->name,
+				'', // TODO - add logic to set selected when page refreshes to load report
+				$taxonomy->label
+			);
+		}
+		
+		return $taxonomy_options;
 	}
 
 
@@ -188,7 +288,7 @@ class Editorial_Statistics {
 	 * Get the list of post types for use in filtering reports
 	 *
 	 * @access private
-	 * @return bool false
+	 * @return array
 	 */
 	private function get_post_types() {
 		// Only return post types that are shown in the admin interface.
@@ -206,8 +306,8 @@ class Editorial_Statistics {
 	/**
 	 * Get the list of taxonomies for use in filtering reports
 	 *
-	 * @param string $message 
-	 * @return bool false
+	 * @access private
+	 * @return array
 	 */
 	private function get_taxonomies() {
 		// Only return taxonomies that are shown in the admin interface.
@@ -225,10 +325,10 @@ class Editorial_Statistics {
 	/**
 	 * Get the list of authors for use in filtering reports
 	 *
-	 * @param string $message 
-	 * @return bool false
+	 * @access private
+	 * @return array
 	 */
-	private function get_authors( $message ) {
+	private function get_authors() {
 		// Only return taxonomies that are shown in the admin interface.
 		// Otherwise, the list could be confusing to editors or provide invalid options.
 		return coauthors_wp_list_authors(
