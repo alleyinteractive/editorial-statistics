@@ -1,4 +1,4 @@
-editorial-statistics
+Editorial Statistics
 ====================
 This plugin allows editors to view total content published with the following available settings: 
 
