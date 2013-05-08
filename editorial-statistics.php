@@ -1,7 +1,7 @@
 <?php
 /*
  Plugin Name: Editorial Statistics
- Description: Allows editors to view posts published per author, content type, and/or taxonomy term within a specified date range.
+ Description: Allows editors to generate reports in HTML or CSV format for posts published per author, content type, and/or taxonomy term within a specified date range. Compatible with Co-Authors Plus.
  Author: Alley Interactive (Bradford Campeau-Laurion)
  Version: 0.1
  Author URI: http://alleyinteractive.com
