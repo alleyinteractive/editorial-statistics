@@ -3,12 +3,12 @@
 }
 
 #editorial_statistics_terms_chzn {
-	width: 250px !important;
+	min-width: 250px !important;
 }
 
 #editorial_statistics_terms_chzn input,
 .chzn-drop {
-	width: 240px !important;
+	min-width: 240px !important;
 }
 
 #report_table td {

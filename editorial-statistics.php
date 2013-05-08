@@ -7,6 +7,8 @@
  Author URI: http://alleyinteractive.com
  */
 
+require_once( dirname( __FILE__ ) . '/php/class-plugin-dependency.php' );
+
 class Editorial_Statistics {
 	private static $__instance = NULL;
 
@@ -86,6 +88,7 @@ class Editorial_Statistics {
 	 */
 	public function prepare() {
 		add_action( 'init', array( &$this, 'setup_plugin' ) );
+		add_action( 'wp_loaded', array( &$this, 'check_csv_export' ) );
 	}
 
 
@@ -96,7 +99,7 @@ class Editorial_Statistics {
 	 * @return void
 	 */
 	public function setup_plugin() {
-		// Add action hooks to display the report interface
+		// Add action hooks to display the report interface and to handle exports
 		add_action( 'admin_menu', array( &$this, 'register_management_page' ) );
 		add_action( 'admin_enqueue_scripts', array( &$this, 'enqueue_scripts' ) );
 		
@@ -140,12 +143,8 @@ class Editorial_Statistics {
 		$screen = get_current_screen();
 
 		if ( $screen->id == $this->screen_id ) {
-			// Enqueue and localize variables used by the plugin script
+			// Enqueue the plugin script
 			wp_enqueue_script( $this->prefix . 'js', plugin_dir_url( __FILE__ ) . 'js/editorial-statistics.js', false, '1.0', true );
-			$settings = array(
-				'prefix'    => $this->prefix
-			);
-			wp_localize_script( $this->prefix . 'js', $this->i18n, $settings );
 			
 			// Add chosen.js for the taxonomy selection field
 			wp_enqueue_script( 'chosen', plugin_dir_url( __FILE__ ) . 'js/chosen/chosen.jquery.min.js', false, '1.0', true );
@@ -186,14 +185,15 @@ class Editorial_Statistics {
 			<div class="wrap">
 				<?php screen_icon(); ?>
 				<h2><?php _e( $this->plugin_name, $this->i18n ) ?></h2>
-				
-				<form id="editorial_statistics_form" method="post" action="">	
+
+				<form id="editorial_statistics_form" method="post" action="">
+					<input type="hidden" name="<?php echo $this->prefix ?>output_format" id="<?php echo $this->prefix ?>output_format" value="<?php echo ( isset( $_POST[$this->prefix . 'output_format'] ) ) ? $_POST[$this->prefix . 'output_format'] : 'html' ?>" />
 					<h3><?php _e( 'Report Settings', $this->i18n ) ?></h3>
 					<?php wp_nonce_field( $this->prefix . 'nonce' ) ?>
 					<table class="form-table">
 						<tr valign="top">
 							<th scope="row">
-								<label for="<?php echo $this->prefix ?>_report_columns">
+								<label for="<?php echo $this->prefix ?>start_date">
 									<div>
 										<b><?php _e( 'Start Date', $this->i18n ) ?></b>
 									</div>
@@ -207,7 +207,7 @@ class Editorial_Statistics {
 						</tr>
 						<tr valign="top">
 							<th scope="row">
-								<label for="<?php echo $this->prefix ?>_report_columns">
+								<label for="<?php echo $this->prefix ?>end_date">
 									<div>
 										<b><?php _e( 'End Date', $this->i18n ) ?></b>
 									</div>
@@ -221,7 +221,7 @@ class Editorial_Statistics {
 						</tr>
 						<tr valign="top">
 							<th scope="row">
-								<label for="<?php echo $this->prefix ?>_report_columns">
+								<label for="<?php echo $this->prefix ?>predefined_date_ranges">
 									<div>
 										<b><?php _e( 'Predefined Date Ranges', $this->i18n ) ?></b>
 									</div>
@@ -245,7 +245,7 @@ class Editorial_Statistics {
 						</tr>
 						<tr valign="top">
 							<th scope="row">
-								<label for="<?php echo $this->prefix ?>_report_columns">
+								<label for="<?php echo $this->prefix ?>report_columns">
 									<div>
 										<b><?php _e( 'Report Columns', $this->i18n ) ?></b>
 									</div>
@@ -300,18 +300,8 @@ class Editorial_Statistics {
 	
 				</form>
 				<?php
-				
-					// If the form was submitted, display the report
-					if ( ! empty( $_POST['editorial_statistics_submit'] ) ) {
-						// Capability check
-						if ( ! current_user_can( 'edit_others_posts' ) )
-							wp_die( __( 'You do not have access to perform this action' ) );
-			
-						// Form nonce check
-						check_admin_referer( $this->prefix . 'nonce' );
-						
-						$this->create_report();
-					}
+					// If the form was submitted, display the report in HTML format.
+					$this->create_report();
 				?>
 			</div>
 		<?php
@@ -404,35 +394,32 @@ class Editorial_Statistics {
 		
 		return ! in_array( $post_type, $post_types_to_filter );
 	}
-	
-	
-	/**
-	 * DEPRECATED? Get the list of authors for use in filtering reports
-	 *
-	 * @access private
-	 * @return array
-	 */
-	private function get_authors() {
-		// Only return taxonomies that are shown in the admin interface.
-		// Otherwise, the list could be confusing to editors or provide invalid options.
-		return coauthors_wp_list_authors(
-			array( 
-				'html' => false,
-				'hide_empty' => false,
-				'echo' => false,
-				'show_fullname' => true
-			)
-		);
-	}
-	
+
 	
 	/**
 	 * Create the output for the editorial statistics report
 	 *
 	 * @access private
+	 * @param string $mode
 	 * @return void
 	 */
-	private function create_report() {
+	private function create_report( $mode = 'html' ) {
+		// Check if the report form was submitted. If not, just return.
+		if ( ! isset( $_POST['editorial_statistics_output_format'] ) || empty( $_POST['editorial_statistics_output_format'] ) )
+			return;
+
+		// Capability check
+		if ( ! current_user_can( 'edit_others_posts' ) )
+			wp_die( __( 'You do not have access to perform this action' ) );
+
+		// Form nonce check
+		check_admin_referer( $this->prefix . 'nonce' );
+
+		// If the output format does not match the mode, exit
+		// This is important to prevent HTML reports from being output during the init action reserved for CSV reports
+		if ( $_POST[$this->prefix . 'output_format'] != $mode )
+			return;
+
 		// Query for all posts for public post types in the specified date range
 		add_filter( 'posts_where', array( &$this, 'report_date_filter' ) );
 		$args = array(
@@ -442,84 +429,62 @@ class Editorial_Statistics {
 		$posts_query = new WP_Query( $args );
 		$posts = $posts_query->get_posts();		
 		remove_filter( 'posts_where', array( &$this, 'report_date_filter' ) );
-		
-		?>
-			<h3><?php _e( 'Report', $this->i18n ) ?></h3>
-		<?php
-			if ( count( $posts ) > 0 && isset( $_POST[$this->prefix . 'report_columns'] ) ) {
-		?>
-			<table>
-			<?php
-				// Create an array to hold the final data
-				$report_data = array();
-				
-				// Now we will iterate over each post. 
-				// The available report columns are author, content type, and tag in that order. 
-				// Based on which were selected, we will group counts for each into a multidimensional array
-				// that will later serve as the final output of the report. 
-				foreach( $posts as $post ) {
-					// Build the array keys that will be used to classify and count this post
-					// Report granularity should always be displayed as author, then content type and then term for the specified taxonomies
-					$keys = array();
-				
-					if ( in_array( 'author', $_POST[$this->prefix . 'report_columns'] ) ) {
-						$authors = array();
-						if ( $this->coauthors_plus->verify() ) {
-							foreach( get_coauthors( $post->ID ) as $coauthor ) {
-								$authors[] = $coauthor->display_name;
-							}
-						} else { 
-							$authors[] = $post->post_author;
-						}
 
-						$keys[] = $authors;
-					}
-					
-					if ( in_array( 'content_type', $_POST[$this->prefix . 'report_columns'] ) ) {
-						// Use an array here to be consistent with authors and terms and simplify the recursive function that adds totals
-						$keys[] = array( get_post_type_object( $post->post_type )->labels->singular_name );
-					}
-					
-					if ( in_array( 'term', $_POST[$this->prefix . 'report_columns'] ) ) {
-						$taxonomy_terms = array();
-						foreach( wp_get_post_terms( $post->ID, $_POST[$this->prefix . 'terms'] ) as $term ) {
-							$taxonomy_terms[] = $term->name;
+		if ( count( $posts ) > 0 && isset( $_POST[$this->prefix . 'report_columns'] ) ) { 
+			// Create an array to hold the final data
+			$report_data = array();
+			
+			// Now we will iterate over each post. 
+			// The available report columns are author, content type, and tag in that order. 
+			// Based on which were selected, we will group counts for each into a multidimensional array
+			// that will later serve as the final output of the report. 
+			foreach( $posts as $post ) {
+				// Build the array keys that will be used to classify and count this post
+				// Report granularity should always be displayed as author, then content type and then term for the specified taxonomies
+				$keys = array();
+			
+				if ( in_array( 'author', $_POST[$this->prefix . 'report_columns'] ) ) {
+					$authors = array();
+					if ( $this->coauthors_plus->verify() ) {
+						foreach( get_coauthors( $post->ID ) as $coauthor ) {
+							$authors[] = $coauthor->display_name;
 						}
-						
-						// If there are no terms, just use 'None'
-						if ( empty( $taxonomy_terms ) )
-							$taxonomy_terms[] = __( 'None', $this->i18n );
-						
-						$keys[] = $taxonomy_terms;
+					} else { 
+						$authors[] = $post->post_author;
 					}
 
-					// Add this story to the totals for the appropriate rows in the final report
-					$report_data = $this->add_report_totals( $report_data, $keys );
+					$keys[] = $authors;
 				}
 				
-				// Sort the data for the report
-				$this->sort_report_data( $report_data );
+				if ( in_array( 'content_type', $_POST[$this->prefix . 'report_columns'] ) ) {
+					// Use an array here to be consistent with authors and terms and simplify the recursive function that adds totals
+					$keys[] = array( get_post_type_object( $post->post_type )->labels->singular_name );
+				}
 				
-				// Output the data
-				?>
-				<table id="report_table">
-					<tr>
-						<?php	
-							foreach( $_POST[$this->prefix . 'report_columns'] as $report_column ) {
-								echo sprintf(
-									'<td class="header">%s</td>',
-									__( ucwords( str_replace( '_', ' ', $report_column ) ), $this->i18n )
-								);
-							}
-						?>
-						<td class="header"><?php _e( 'Total Stories', $this->i18n ) ?></td>
-					</tr>
-				<?php $this->output_report_data( $report_data ) ?>
-				</table>
-				<?php
-			?>
-			</table>
-		<?php } else { ?>
+				if ( in_array( 'term', $_POST[$this->prefix . 'report_columns'] ) ) {
+					$taxonomy_terms = array();
+					foreach( wp_get_post_terms( $post->ID, $_POST[$this->prefix . 'terms'] ) as $term ) {
+						$taxonomy_terms[] = $term->name;
+					}
+					
+					// If there are no terms, just use 'None'
+					if ( empty( $taxonomy_terms ) )
+						$taxonomy_terms[] = __( 'None', $this->i18n );
+					
+					$keys[] = $taxonomy_terms;
+				}
+
+				// Add this story to the totals for the appropriate rows in the final report
+				$report_data = $this->add_report_totals( $report_data, $keys );
+			}
+			
+			// Sort the data for the report
+			$this->sort_report_data( $report_data );
+			
+			// Output the data
+			$this->output_report_data( $report_data, $_POST[$this->prefix . 'output_format'], $_POST[$this->prefix . 'report_columns'] );
+				
+		} else if ( ( count( $posts ) == 0 || ! isset( $_POST[$this->prefix . 'report_columns'] ) ) && $_POST[$this->prefix . 'output_format'] == 'html' ) { ?>
 			<h4><?php _e( 'No results were returned for the current report settings.', $this->i18n ) ?></h4>
 		<?php }
 	}
@@ -578,16 +543,87 @@ class Editorial_Statistics {
 	
 	
 	/**
-	 * Recursive function to output the final data for the report
+	 * Outputs the final data for the report
 	 * Uses a simple HTML table or CSV format
 	 *
 	 * @access private
 	 * @param array $report_data
-	 * @param array $row_values
 	 * @param string $report_format
+	 * @param string $report_columns
 	 * @return string
 	 */
-	private function output_report_data( $report_data, $row_values = array(), $report_format = 'HTML' ) {
+	private function output_report_data( $report_data, $report_format = 'html', $report_columns ) {
+		// Generate the data for the report
+		$this->generate_report_data( $output_data, $report_data, $_POST[$this->prefix . 'output_format'] );
+		
+		// Output based on the format specified
+		if( $report_format == 'csv' ) {
+
+			// Set the filename for the report
+			$filename = 'report.csv';
+			
+			// Output the headers required for CSV export
+			header( 'Cache-Control: must-revalidate, post-check=0, pre-check=0' );
+			header( 'Content-Description: File Transfer' );
+			header( 'Content-type: text/csv' );
+			header( "Content-Disposition: attachment; filename={$filename}" );
+			header( 'Expires: 0' );
+			header( 'Pragma: public' );
+			
+			// Open the file handle for streaming output
+			$fh = @fopen( 'php://output', 'w' );
+			
+			// Write the headers
+			$report_columns = array_map( array( &$this, 'format_report_column' ), $report_columns );
+			$report_columns[] = __( 'Total Stories', $this->i18n );
+			$header_row = sprintf(
+				"\"%s\"\n",
+				implode( '","', $report_columns )
+			);
+			fwrite( $fh, $header_row );
+			
+			// Write the data
+			fwrite( $fh, $output_data );
+			
+			// Close the file handle
+			fclose( $fh );
+			
+			// Exit at this point because we don't want to display anything further in the popup window
+			exit;	
+		} else {
+		?>
+			<h3><?php _e( 'Report', $this->i18n ) ?></h3>
+			<div><a href="#" id="<?php echo $this->prefix ?>export_to_csv"><?php _e( 'Export to CSV', $this->i18n ) ?></a></div>
+			<table id="report_table">
+				<tr>
+					<?php	
+						foreach( $report_columns as $report_column ) {
+							echo sprintf(
+								'<td class="header">%s</td>',
+								$this->format_report_column( $report_column )
+							);
+						}
+					?>
+					<td class="header"><?php _e( 'Total Stories', $this->i18n ) ?></td>
+				</tr>
+				<?php echo $output_data ?>
+			</table>
+		<?php
+		}
+	}
+	
+	
+	/**
+	 * Generates the data for the report in either HTML or CSV format
+	 *
+	 * @access private
+	 * @param string $output_data
+	 * @param array $report_data
+	 * @param string $report_format
+	 * @param array $row_values
+	 * @return string
+	 */
+	private function generate_report_data( &$output_data, $report_data, $report_format = 'html', $row_values = array() ) {
 		// Determine if we are still building a row of data or if it is ready to be output
 		if ( is_array( $report_data ) ) {
 			// This is still an array of data so get the keys for the current level
@@ -599,7 +635,7 @@ class Editorial_Statistics {
 				$row_values[] = $key;
 				
 				// Recursively call this function until we reach the total (i.e. final column)
-				$this->output_report_data( $report_data[$key], $row_values, $report_format );
+				$this->generate_report_data( $output_data, $report_data[$key], $report_format, $row_values );
 				
 				// Pop this column off the output data before we iterate to the next one
 				array_pop( $row_values );
@@ -608,12 +644,12 @@ class Editorial_Statistics {
 			// If report data is not an array, we've reached the lowest level of the report data and should output the row
 			// Set the row start, end and separators based on the output format
 			switch( $report_format ) {
-				case 'CSV':
-					$row_start = "'";
-					$row_end = "'\r";
-					$separator = "','";
+				case 'csv':
+					$row_start = '"';
+					$row_end = "\"\n";
+					$separator = '","';
 					break;
-				case 'HTML':
+				case 'html':
 				default:
 					$row_start = '<tr><td>';
 					$row_end = '</td></tr>';
@@ -622,14 +658,14 @@ class Editorial_Statistics {
 			}
 			
 			// Start the row
-			echo $row_start;
+			$output_data .= $row_start;
 
 			// Output the row data after adding the final column, which is the total
 			$row_values[] = $report_data;
-			echo implode( $separator, $row_values );
+			$output_data .= implode( $separator, $row_values );
 			
 			// End the row
-			echo $row_end;
+			$output_data .= $row_end;
 		}
 	}
 	
@@ -647,6 +683,31 @@ class Editorial_Statistics {
 				$this->sort_report_data( $column );
 		}
 		ksort( $report_data );
+	}
+	
+	
+	/**
+	 * Format a report column type for output in a report
+	 *
+	 * @access private
+	 * @param string $report_column
+	 * @return void
+	 */
+	public function format_report_column( $report_column ) {
+		return __( ucwords( str_replace( '_', ' ', $report_column ) ), $this->i18n );
+	}
+	
+	
+	/**
+	 * Check if a CSV export was requested
+	 *
+	 * @access public
+	 * @return void
+	 */
+	public function check_csv_export() {
+		// Check if the report form was submitted for CSV export
+		// If so, intercept it here and output the required headers to stream a CSV to the browser
+		$this->create_report( 'csv' );
 	}
 	
 
