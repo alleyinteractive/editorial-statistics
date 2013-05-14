@@ -187,7 +187,7 @@ class Editorial_Statistics {
 				<h2><?php _e( $this->plugin_name, $this->i18n ) ?></h2>
 
 				<form id="editorial_statistics_form" method="post" action="">
-					<input type="hidden" name="<?php echo $this->prefix ?>output_format" id="<?php echo $this->prefix ?>output_format" value="<?php echo ( isset( $_POST[$this->prefix . 'output_format'] ) ) ? $_POST[$this->prefix . 'output_format'] : 'html' ?>" />
+					<input type="hidden" name="<?php echo $this->prefix ?>output_format" id="<?php echo $this->prefix ?>output_format" value="<?php echo ( isset( $_POST[$this->prefix . 'output_format'] ) ) ? esc_attr( $_POST[$this->prefix . 'output_format'] ) : 'html' ?>" />
 					<h3><?php _e( 'Report Settings', $this->i18n ) ?></h3>
 					<?php wp_nonce_field( $this->prefix . 'nonce' ) ?>
 					<table class="form-table">
@@ -201,7 +201,7 @@ class Editorial_Statistics {
 								</label>
 							</th>
 							<td>
-								<input type="text" name="<?php echo $this->prefix ?>start_date" id="<?php echo $this->prefix ?>start_date" value="<?php echo ( isset( $_POST[$this->prefix . 'start_date'] ) ) ? $_POST[$this->prefix . 'start_date'] : '' ?>" />
+								<input type="text" name="<?php echo $this->prefix ?>start_date" id="<?php echo $this->prefix ?>start_date" value="<?php echo ( isset( $_POST[$this->prefix . 'start_date'] ) ) ? esc_attr( $_POST[$this->prefix . 'start_date'] ) : '' ?>" />
 								<div class="error-message"></div>
 							</td>
 						</tr>
@@ -215,7 +215,7 @@ class Editorial_Statistics {
 								</label>
 							</th>
 							<td>
-								<input type="text" name="<?php echo $this->prefix ?>end_date" id="<?php echo $this->prefix ?>end_date" value="<?php echo ( isset( $_POST[$this->prefix . 'end_date'] ) ) ? $_POST[$this->prefix . 'end_date'] : '' ?>" />
+								<input type="text" name="<?php echo $this->prefix ?>end_date" id="<?php echo $this->prefix ?>end_date" value="<?php echo ( isset( $_POST[$this->prefix . 'end_date'] ) ) ? esc_attr( $_POST[$this->prefix . 'end_date'] ) : '' ?>" />
 								<div class="error-message"></div>
 							</td>
 						</tr>
@@ -257,10 +257,10 @@ class Editorial_Statistics {
 									<?php 
 										echo sprintf(
 											'<input type="checkbox" value="%s" name="%sreport_columns[]" id="%sreport_columns_%s" class="editorial-statistics-report-column" %s />',
-											$report_column,
-											$this->prefix,
-											$this->prefix,
-											$report_column,
+											esc_attr( $report_column ),
+											esc_attr( $this->prefix ),
+											esc_attr( $this->prefix ),
+											esc_attr( $report_column ),
 											( isset( $_POST[$this->prefix . 'report_columns'] ) && in_array( $report_column, $_POST[$this->prefix . 'report_columns'] ) ) ? ' checked="checked"' : ''
 										);
 									?>
@@ -327,9 +327,9 @@ class Editorial_Statistics {
 		foreach( $taxonomies as $taxonomy ) {
 			$taxonomy_options .= sprintf(
 				'<option value="%s" %s>%s</option>',
-				$taxonomy->name,
+				esc_attr( $taxonomy->name ),
 				( isset( $_POST[$this->prefix . 'terms'] ) && in_array( $taxonomy->name, $_POST[$this->prefix . 'terms'] ) ) ? ' selected="selected"' : '',
-				$taxonomy->label
+				esc_html( $taxonomy->label )
 			);
 		}
 		
@@ -500,7 +500,7 @@ class Editorial_Statistics {
 	public function report_date_filter( $where = '' ) {
 		// Ensure the date parameters are set. Otherwise invalidate the query.
 		if( isset( $_POST[$this->prefix . 'start_date'] ) && isset( $_POST[$this->prefix . 'end_date'] ) )
-			$where .= " AND post_date >= '" . date( 'Y-m-d', strtotime( $_POST[$this->prefix . 'start_date'] ) ) . "' AND post_date < '" . date( 'Y-m-d', strtotime( $_POST[$this->prefix . 'end_date'] ) + ( 60*60*24 ) ) . "'";
+			$where .= " AND post_date >= '" . date( 'Y-m-d', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ) ) . "' AND post_date < '" . date( 'Y-m-d', intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) + ( 60*60*24 ) ) . "'";
 		else
 			$where .= " AND 1=2";
 			
@@ -593,7 +593,7 @@ class Editorial_Statistics {
 		} else {
 		?>
 			<h3><?php _e( 'Report', $this->i18n ) ?></h3>
-			<div><a href="#" id="<?php echo $this->prefix ?>export_to_csv"><?php _e( 'Export to CSV', $this->i18n ) ?></a></div>
+			<div><a href="#" id="<?php echo esc_attr( $this->prefix ); ?>export_to_csv"><?php _e( 'Export to CSV', $this->i18n ) ?></a></div>
 			<table id="report_table">
 				<tr>
 					<?php	
@@ -661,7 +661,7 @@ class Editorial_Statistics {
 			$output_data .= $row_start;
 
 			// Output the row data after adding the final column, which is the total
-			$row_values[] = $report_data;
+			$row_values[] = esc_html( $report_data );
 			$output_data .= implode( $separator, $row_values );
 			
 			// End the row
