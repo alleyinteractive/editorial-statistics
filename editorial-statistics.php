@@ -526,6 +526,7 @@ class Editorial_Statistics {
 			// If the keys array is now empty, we have reached the lowest level and add one to the key
 			// Otherwise, recurse with the trimmed keys array and set this index equal to the result
 			if ( empty( $keys ) ) {
+				if ( empty( $report_data[$lvl_key] ) ) $report_data[$lvl_key] = 0;
 				$report_data[$lvl_key]++;
 			} else {
 				// If this key does not yet exist, initialize it as an empty array
