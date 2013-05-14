@@ -38,10 +38,6 @@ class Editorial_Statistics {
 	
 	/** @type string Screen ID */
 	private $screen_id = 'tools_page_editorial-statistics'; 
-	
-	/** @type object Dependency check on Co-Authors Plus **/
-	private $coauthors_plus;
-	
 
 	/**
 	 * Constructor
@@ -126,9 +122,7 @@ class Editorial_Statistics {
 				'end_date' => date( $this->default_date_format, strtotime( 'last day of last month' ) )
 			) 
 		);
-		
-		// Add the dependency check used later to check if Co-Authors Plus is active
-		$this->coauthors_plus = new Plugin_Dependency( $this->plugin_name, 'Co-Authors Plus', 'http://wordpress.org/extend/plugins/co-authors-plus/' );
+
 	}
 
 
@@ -445,7 +439,7 @@ class Editorial_Statistics {
 			
 				if ( in_array( 'author', $_POST[$this->prefix . 'report_columns'] ) ) {
 					$authors = array();
-					if ( $this->coauthors_plus->verify() ) {
+					if ( function_exists( 'get_coauthors' ) ) {
 						foreach( get_coauthors( $post->ID ) as $coauthor ) {
 							$authors[] = $coauthor->display_name;
 						}
