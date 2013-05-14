@@ -7,8 +7,6 @@
  Author URI: http://alleyinteractive.com
  */
 
-require_once( dirname( __FILE__ ) . '/php/class-plugin-dependency.php' );
-
 class Editorial_Statistics {
 	private static $__instance = NULL;
 
