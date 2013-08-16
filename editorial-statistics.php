@@ -439,7 +439,7 @@ class Editorial_Statistics {
 
 			// Fetch viewcounts
 			$viewcounts = $this->fetch_viewcounts( $posts, 'gothamschools', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
-			
+			print_r($viewcounts);
 			// Now we will iterate over each post. 
 			// The available report columns are author, content type, and tag in that order. 
 			// Based on which were selected, we will group counts for each into a multidimensional array
@@ -594,7 +594,7 @@ class Editorial_Statistics {
 			// Write the headers
 			$report_columns = array_map( array( &$this, 'format_report_column' ), $report_columns );
 			$report_columns[] = __( 'Total Stories', $this->i18n );
-			$report_columns[] = __( 'Total Viewcounts', $this->i18n );
+			$report_columns[] = __( 'Total Views', $this->i18n );
 			$header_row = sprintf(
 				"\"%s\"\n",
 				implode( '","', $report_columns )
@@ -624,7 +624,7 @@ class Editorial_Statistics {
 						}
 					?>
 					<td class="header"><?php _e( 'Total Stories', $this->i18n ) ?></td>
-					<td class="header"><?php _e( 'Total Viewcounts', $this->i18n ) ?></td>
+					<td class="header"><?php _e( 'Total Views', $this->i18n ) ?></td>
 				</tr>
 				<?php echo $output_data ?>
 			</table>
