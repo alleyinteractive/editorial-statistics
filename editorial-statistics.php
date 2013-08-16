@@ -483,7 +483,7 @@ class Editorial_Statistics {
 				print $post->ID . ' ';
 				foreach ( $viewcounts as $k => $v ) {
 					print "c: " . $k . ' - ' . $post->ID;
-					if (intval(trim($k)) == intval(trim($post_ID)) ) {
+					if (intval(trim($k)) == intval(trim($post->ID)) ) {
 						print "***";
 					}
 				}
