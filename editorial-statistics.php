@@ -714,6 +714,7 @@ class Editorial_Statistics {
 			'ids=' . implode( ',', $post_ids )
 		);
 		$url .= implode( '&', $args );
+		print $url;
 		$json = wp_remote_get( $url );
 		print $json;
 	}
