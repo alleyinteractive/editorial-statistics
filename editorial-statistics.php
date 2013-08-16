@@ -438,7 +438,8 @@ class Editorial_Statistics {
 			$report_data = array();
 
 			// Fetch viewcounts
-			$viewcounts = $this->fetch_viewcounts( $posts, 'gothamschools', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
+			$viewcounts = $this->fetch_counts( $posts, 'gothamschools', 'view_article' intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
+			$sharecounts = $this->fetch_counts( $posts, 'gothamschools', 'share_article' intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
 
 			// Now we will iterate over each post. 
 			// The available report columns are author, content type, and tag in that order. 
@@ -487,8 +488,16 @@ class Editorial_Statistics {
 					$viewcount = 0;
 				}
 				$viewcount = $viewcounts[$post->ID];
+
+				if ( array_key_exists( $post->ID, $sharecounts ) ) {
+					$sharecount = $sharecounts[$post->ID];
+				}
+				else {
+					$sharecount = 0;
+				}
+				$sharecount = $sharecounts[$post->ID];
 				// Add this story to the totals for the appropriate rows in the final report
-				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount );
+				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount, $sharecount );
 			}
 			
 			// Sort the data for the report
@@ -531,7 +540,7 @@ class Editorial_Statistics {
 	 * @param int $viewcount
 	 * @return string
 	 */
-	private function add_report_totals( $report_data, $keys, $viewcount ) {
+	private function add_report_totals( $report_data, $keys, $viewcount, $sharecount ) {
 		// Get the keys used for this level and shift them off the array of keys
 		$lvl_keys = array_shift( $keys );
 		
@@ -540,9 +549,10 @@ class Editorial_Statistics {
 			// If the keys array is now empty, we have reached the lowest level and add one to the key
 			// Otherwise, recurse with the trimmed keys array and set this index equal to the result
 			if ( empty( $keys ) ) {
-				if ( empty( $report_data[$lvl_key] ) ) $report_data[$lvl_key] = array( 'article_count' => 0, 'view_count' => 0 );
+				if ( empty( $report_data[$lvl_key] ) ) $report_data[$lvl_key] = array( 'article_count' => 0, 'view_count' => 0, 'share_count' );
 				$report_data[$lvl_key]['article_count']++;
 				$report_data[$lvl_key]['view_count'] += $viewcount;
+				$report_data[$lvl_key]['share_count'] += $sharecount;
 			} else {
 				// If this key does not yet exist, initialize it as an empty array
 				if ( ! array_key_exists( $lvl_key, $report_data ) )
@@ -681,6 +691,7 @@ class Editorial_Statistics {
 			// Output the row data after adding the final column, which is the total
 			$row_values[] = esc_html( $report_data['article_count'] );
 			$row_values[] = esc_html( $report_data['view_count'] );
+			$row_values[] = esc_html( $report_data['share_count'] );
 			$output_data .= implode( $separator, $row_values );
 			
 			// End the row
@@ -711,7 +722,7 @@ class Editorial_Statistics {
 	 * @param array $posts
 	 * @return array
 	 */
-	private function fetch_viewcounts( $posts, $client, $from_ts, $to_ts ) {
+	private function fetch_counts( $posts, $client, $event_type, $from_ts, $to_ts ) {
 		$post_ids = array();
 		foreach( $posts as $post ) {
 			$post_ids[] = $post->ID;
@@ -722,7 +733,7 @@ class Editorial_Statistics {
 			'from=' . $from_ts,
 			'to=' . $to_ts,
 			'client=' . $client,
-			'event_type=view_article',
+			'event_type=' . $event_type,
 			'ids=' . implode( ',', $post_ids )
 		);
 		$url .= implode( '&', $args );
