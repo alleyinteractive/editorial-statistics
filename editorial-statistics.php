@@ -499,6 +499,8 @@ class Editorial_Statistics {
 				// Add this story to the totals for the appropriate rows in the final report
 				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount, $sharecount );
 			}
+
+			print "<pre>".print_r($report_data,true)."</pre>";
 			
 			// Sort the data for the report
 			$this->sort_report_data( $report_data );
