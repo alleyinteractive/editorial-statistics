@@ -645,7 +645,7 @@ class Editorial_Statistics {
 	 */
 	private function generate_report_data( &$output_data, $report_data, $report_format = 'html', $row_values = array() ) {
 		// Determine if we are still building a row of data or if it is ready to be output
-		if ( is_array( $report_data ) ) {
+		if ( is_array( $report_data ) && ! array_key_exists( 'article_count', $report_data ) && ! array_key_exists( 'view_count', $report_data ) ) {
 			// This is still an array of data so get the keys for the current level
 			// Add it to the row values as the next column of data to be output and pass its value to this function recursively
 			$keys = array_keys( $report_data );
@@ -681,7 +681,8 @@ class Editorial_Statistics {
 			$output_data .= $row_start;
 
 			// Output the row data after adding the final column, which is the total
-			$row_values[] = esc_html( $report_data );
+			$row_values[] = esc_html( $report_data['article_count'] );
+			$row_values[] = esc_html( $report_data['view_count'] );
 			$output_data .= implode( $separator, $row_values );
 			
 			// End the row
