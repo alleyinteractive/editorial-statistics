@@ -479,6 +479,7 @@ class Editorial_Statistics {
 					
 					$keys[] = $taxonomy_terms;
 				}
+				print_r($viewcounts);
 				print $post->ID . ' ';
 				if ( array_key_exists( $post->ID, $viewcounts ) ) {
 					print "y ";
