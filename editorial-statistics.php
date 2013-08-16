@@ -739,8 +739,14 @@ class Editorial_Statistics {
 		);
 		$url .= implode( '&', $args );
 		$result = wp_remote_get( $url );
-		$counts = json_decode( $result['body'] );
-		return (array)$counts;
+		$counts = (array)json_decode( $result['body'] );
+		$return = array();
+		foreach ( $counts as $k => $v ) {
+			$k = intval( trim( $k ) );
+			$v = intval( trim( $v ) );
+			$return[$k] = $v;
+		}
+		return $return;
 	}
 	
 	
