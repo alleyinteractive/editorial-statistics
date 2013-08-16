@@ -481,9 +481,11 @@ class Editorial_Statistics {
 				}
 				print $post->ID . ' ';
 				if ( array_key_exists( $post->ID, $viewcounts ) ) {
+					print "y ";
 					$viewcount = $viewcounts[$post->ID];
 				}
 				else {
+					print "n ";
 					$viewcount = 0;
 				}
 
