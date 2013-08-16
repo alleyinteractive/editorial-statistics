@@ -488,7 +488,8 @@ class Editorial_Statistics {
 					print "n ";
 					$viewcount = 0;
 				}
-
+				$viewcount = $viewcounts[$post->ID];
+				print $viewcount;
 				// Add this story to the totals for the appropriate rows in the final report
 				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount );
 			}
