@@ -491,7 +491,7 @@ class Editorial_Statistics {
 				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount );
 			}
 
-			print_r($report_data);
+			print "<pre>" . print_r($report_data, true) . "</pre>";
 			
 			// Sort the data for the report
 			$this->sort_report_data( $report_data );
@@ -727,7 +727,6 @@ class Editorial_Statistics {
 			'ids=' . implode( ',', $post_ids )
 		);
 		$url .= implode( '&', $args );
-		print $url;
 		$result = wp_remote_get( $url );
 		$counts = json_decode( $result['body'] );
 		return $counts;
