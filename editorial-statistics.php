@@ -439,7 +439,7 @@ class Editorial_Statistics {
 
 			// Fetch viewcounts
 			$viewcounts = $this->fetch_viewcounts( $posts, 'gothamschools', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
-			print_r($viewcounts);
+
 			// Now we will iterate over each post. 
 			// The available report columns are author, content type, and tag in that order. 
 			// Based on which were selected, we will group counts for each into a multidimensional array
@@ -490,8 +490,6 @@ class Editorial_Statistics {
 				// Add this story to the totals for the appropriate rows in the final report
 				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount );
 			}
-
-			print "<pre>" . print_r($report_data, true) . "</pre>";
 			
 			// Sort the data for the report
 			$this->sort_report_data( $report_data );
