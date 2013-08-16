@@ -480,9 +480,18 @@ class Editorial_Statistics {
 					$keys[] = $taxonomy_terms;
 				}
 
+				if ( array_key_exists( $post->ID, $viewcounts ) ) {
+					$viewcount = $viewcounts[$post->ID];
+				}
+				else {
+					$viewcount = 0;
+				}
+
 				// Add this story to the totals for the appropriate rows in the final report
-				$report_data = $this->add_report_totals( $report_data, $keys );
+				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount );
 			}
+
+			print_r($report_data);
 			
 			// Sort the data for the report
 			$this->sort_report_data( $report_data );
@@ -521,9 +530,10 @@ class Editorial_Statistics {
 	 * @access private
 	 * @param array $report_data
 	 * @param array $keys
+	 * @param int $viewcount
 	 * @return string
 	 */
-	private function add_report_totals( $report_data, $keys ) {
+	private function add_report_totals( $report_data, $keys, $viewcount ) {
 		// Get the keys used for this level and shift them off the array of keys
 		$lvl_keys = array_shift( $keys );
 		
@@ -532,15 +542,16 @@ class Editorial_Statistics {
 			// If the keys array is now empty, we have reached the lowest level and add one to the key
 			// Otherwise, recurse with the trimmed keys array and set this index equal to the result
 			if ( empty( $keys ) ) {
-				if ( empty( $report_data[$lvl_key] ) ) $report_data[$lvl_key] = 0;
-				$report_data[$lvl_key]++;
+				if ( empty( $report_data[$lvl_key] ) ) $report_data[$lvl_key] = array( 'article_count' => 0, 'view_count' => 0 );
+				$report_data[$lvl_key]['article_count']++;
+				$report_data[$lvl_key]['view_count'] += $viewcount;
 			} else {
 				// If this key does not yet exist, initialize it as an empty array
 				if ( ! array_key_exists( $lvl_key, $report_data ) )
 					$report_data[$lvl_key] = array();
 				
 				// Recurse with the newly trimmed keys array to get down to the final level to add totals
-				$report_data[$lvl_key] = $this->add_report_totals( $report_data[$lvl_key], $keys );
+				$report_data[$lvl_key] = $this->add_report_totals( $report_data[$lvl_key], $keys, $viewcount );
 			}
 		}
 		
@@ -583,6 +594,7 @@ class Editorial_Statistics {
 			// Write the headers
 			$report_columns = array_map( array( &$this, 'format_report_column' ), $report_columns );
 			$report_columns[] = __( 'Total Stories', $this->i18n );
+			$report_columns[] = __( 'Total Viewcounts', $this->i18n );
 			$header_row = sprintf(
 				"\"%s\"\n",
 				implode( '","', $report_columns )
@@ -612,6 +624,7 @@ class Editorial_Statistics {
 						}
 					?>
 					<td class="header"><?php _e( 'Total Stories', $this->i18n ) ?></td>
+					<td class="header"><?php _e( 'Total Viewcounts', $this->i18n ) ?></td>
 				</tr>
 				<?php echo $output_data ?>
 			</table>
@@ -717,7 +730,7 @@ class Editorial_Statistics {
 		print $url;
 		$result = wp_remote_get( $url );
 		$counts = json_decode( $result['body'] );
-		print_r($counts);
+		return $counts;
 	}
 	
 	
