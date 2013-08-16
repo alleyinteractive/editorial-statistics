@@ -479,24 +479,14 @@ class Editorial_Statistics {
 					
 					$keys[] = $taxonomy_terms;
 				}
-				print_r($viewcounts);
-				print $post->ID . ' ';
-				foreach ( $viewcounts as $k => $v ) {
-					print "c: " . $k . ' - ' . $post->ID;
-					if (intval(trim($k)) == intval(trim($post->ID)) ) {
-						print "***";
-					}
-				}
+
 				if ( array_key_exists( $post->ID, $viewcounts ) ) {
-					print "y ";
 					$viewcount = $viewcounts[$post->ID];
 				}
 				else {
-					print "n ";
 					$viewcount = 0;
 				}
 				$viewcount = $viewcounts[$post->ID];
-				print $viewcount;
 				// Add this story to the totals for the appropriate rows in the final report
 				$report_data = $this->add_report_totals( $report_data, $keys, $viewcount );
 			}
