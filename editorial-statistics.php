@@ -32,6 +32,9 @@ class Editorial_Statistics {
 	
 	/** @type string Default date format to use for reports and date fields */
 	public $default_date_format = 'm/d/Y';
+
+	/** @type string Base url to alley stats API host */
+	public $alleystats_api_url = 'http://api.alleystats.com/enn-edstats.php';
 	
 	/** @type array Predefined date ranges */
 	public $date_ranges = array();
@@ -433,6 +436,9 @@ class Editorial_Statistics {
 		if ( count( $posts ) > 0 && isset( $_POST[$this->prefix . 'report_columns'] ) ) { 
 			// Create an array to hold the final data
 			$report_data = array();
+
+			// Fetch viewcounts
+			$viewcounts = $this->fetch_viewcounts( $posts, 'gothamschools', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
 			
 			// Now we will iterate over each post. 
 			// The available report columns are author, content type, and tag in that order. 
@@ -684,6 +690,32 @@ class Editorial_Statistics {
 				$this->sort_report_data( $column );
 		}
 		ksort( $report_data );
+	}
+
+	/**
+	 * Fetch viewcounts for a series of posts
+	 *
+	 * @access private
+	 * @param array $posts
+	 * @return array
+	 */
+	private function fetch_viewcounts( $posts, $client, $from_ts, $to_ts ) {
+		$post_ids = array();
+		foreach( $posts as $post ) {
+			$post_ids[] = $post->ID;
+		}
+		$url = $this->alleystats_api_url . '?';
+		$args = array(
+			'action=viewcount',
+			'from=' . $from_ts,
+			'to=' . $to_ts,
+			'client=' . $client,
+			'event_type=view_article',
+			'ids=' . implode( ',', $post_ids )
+		);
+		$url .= implode( '&', $args );
+		$json = wp_remote_get( $url );
+		print $json;
 	}
 	
 	
