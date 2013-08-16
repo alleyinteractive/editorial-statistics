@@ -482,7 +482,7 @@ class Editorial_Statistics {
 				print_r($viewcounts);
 				print $post->ID . ' ';
 				foreach ( $viewcouunts as $k => $v ) {
-					print $k . ' - ' . $post->ID;
+					print "c: " . $k . ' - ' . $post->ID;
 				}
 				if ( array_key_exists( $post->ID, $viewcounts ) ) {
 					print "y ";
