@@ -438,8 +438,8 @@ class Editorial_Statistics {
 			$report_data = array();
 
 			// Fetch viewcounts
-			$viewcounts = $this->fetch_counts( $posts, 'gothamschools', 'view_article' intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
-			$sharecounts = $this->fetch_counts( $posts, 'gothamschools', 'share_article' intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
+			$viewcounts = $this->fetch_counts( $posts, 'gothamschools', 'view_article', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
+			$sharecounts = $this->fetch_counts( $posts, 'gothamschools', 'share_article', intval( strtotime( $_POST[$this->prefix . 'start_date'] ) ), intval( strtotime( $_POST[$this->prefix . 'end_date'] ) ) );
 
 			// Now we will iterate over each post. 
 			// The available report columns are author, content type, and tag in that order. 
