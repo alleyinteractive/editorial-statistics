@@ -603,6 +603,7 @@ class Editorial_Statistics {
 			$report_columns = array_map( array( &$this, 'format_report_column' ), $report_columns );
 			$report_columns[] = __( 'Total Stories', $this->i18n );
 			$report_columns[] = __( 'Total Views', $this->i18n );
+			$report_columns[] = __( 'Total Shares', $this->i18n );
 			$header_row = sprintf(
 				"\"%s\"\n",
 				implode( '","', $report_columns )
@@ -633,6 +634,7 @@ class Editorial_Statistics {
 					?>
 					<td class="header"><?php _e( 'Total Stories', $this->i18n ) ?></td>
 					<td class="header"><?php _e( 'Total Views', $this->i18n ) ?></td>
+					<td class="header"><?php _e( 'Total Shares', $this->i18n ) ?></td>
 				</tr>
 				<?php echo $output_data ?>
 			</table>
