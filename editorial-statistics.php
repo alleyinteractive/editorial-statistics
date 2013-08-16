@@ -717,6 +717,7 @@ class Editorial_Statistics {
 		print $url;
 		$result = wp_remote_get( $url );
 		$counts = json_decode( $result['body'] );
+		print_r($counts);
 	}
 	
 	
