@@ -213,7 +213,7 @@ class Editorial_Statistics {
 	 * @access public
 	 */
 	public function register_management_page() {
-		add_management_page( __( $this->plugin_name ), __( $this->plugin_name ), $this->capability, 'editorial-statistics', array( &$this, 'management_page' ) );
+		add_management_page( $this->plugin_name, $this->plugin_name, $this->capability, 'editorial-statistics', array( &$this, 'management_page' ) );
 	}
 	
 	
@@ -278,7 +278,7 @@ class Editorial_Statistics {
 											'<a href="#" class="editorial-statistics-date-range" data-start-date="%s" data-end-date="%s">%s</a>',
 											$date_range['start_date'],
 											$date_range['end_date'],
-											__( $date_range['name'], 'editorial-statistics' )
+											$date_range['name']
 										);
 									}
 									echo implode( '&nbsp;&nbsp;|&nbsp;&nbsp;', $date_range_output );
@@ -315,9 +315,9 @@ class Editorial_Statistics {
 							<th scope="row">
 								<label for="<?php echo $this->prefix ?>terms">
 									<div>
-										<b><?php esc_html_e( 'Choose Taxonomies' ) ?></b>
+										<b><?php esc_html_e( 'Choose Taxonomies', 'editorial-statistics' ) ?></b>
 									</div>
-									<div><?php esc_html_e( 'Choose which taxonomies should be included in the term column (at least one is required).', 'editorial-statistics' ) ?></div>
+									<p><?php esc_html_e( 'Choose which taxonomies should be included in the term column (at least one is required).', 'editorial-statistics' ) ?></p>
 								</label>
 							</th>
 							<td>
@@ -327,7 +327,7 @@ class Editorial_Statistics {
 										esc_attr( $this->prefix . 'terms[]' ),
 										esc_attr( $this->prefix . 'terms' ),
 										esc_html__( 'Select Taxonomies', 'editorial-statistics' ),
-										esc_attr( $this->get_taxonomy_options() )
+										strip_tags( $this->get_taxonomy_options(), '<option>' )
 									);
 								?>
 								<div class="error-message"></div>
@@ -371,7 +371,7 @@ class Editorial_Statistics {
 			$taxonomy_options .= sprintf(
 				'<option value="%s" %s>%s</option>',
 				esc_attr( $taxonomy->name ),
-				( isset( $_POST[$this->prefix . 'terms'] ) && in_array( $taxonomy->name, $_POST[$this->prefix . 'terms'] ) ) ? ' selected="selected"' : '',
+				( isset( $_POST[ $this->prefix . 'terms' ] ) && in_array( $taxonomy->name, $_POST[ $this->prefix . 'terms' ] ) ) ? ' selected="selected"' : '',
 				esc_html( $taxonomy->label )
 			);
 		}
@@ -453,7 +453,7 @@ class Editorial_Statistics {
 
 		// Capability check
 		if ( ! current_user_can( $this->capability ) ) {
-			wp_die( __( 'You do not have access to perform this action' ) );
+			wp_die( __( 'You do not have access to perform this action', 'editorial-statistics' ) );
 		}
 
 		// Form nonce check
