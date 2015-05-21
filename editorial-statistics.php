@@ -187,19 +187,21 @@ class Editorial_Statistics {
 		$screen = get_current_screen();
 
 		if ( $screen->id == $this->screen_id ) {
+			$plugin_url = apply_filters( 'editorial_statistics_plugin_url', plugin_dir_url( __FILE__ ) );
+		
 			// Enqueue the plugin script
-			wp_enqueue_script( $this->prefix . 'js', plugin_dir_url( __FILE__ ) . 'js/editorial-statistics.js', false, '1.0', true );
+			wp_enqueue_script( $this->prefix . 'js', $plugin_url . 'js/editorial-statistics.js', false, '1.0', true );
 			
 			// Add chosen.js for the taxonomy selection field
-			wp_enqueue_script( 'chosen', plugin_dir_url( __FILE__ ) . 'js/chosen/chosen.jquery.min.js', false, '1.0', true );
-			wp_enqueue_style( 'chosen_css', plugin_dir_url( __FILE__ ) . 'js/chosen/chosen.css', false, '1.0' );
+			wp_enqueue_script( 'chosen', $plugin_url  . 'js/chosen/chosen.jquery.min.js', false, '1.0', true );
+			wp_enqueue_style( 'chosen_css', $plugin_url . 'js/chosen/chosen.css', false, '1.0' );
 			
 			// Add form validation
-			wp_enqueue_script( 'jquery-validate', plugin_dir_url( __FILE__ ) . 'js/jquery.validate.min.js', false, '1.0', true );
+			wp_enqueue_script( 'jquery-validate', $plugin_url . 'js/jquery.validate.min.js', false, '1.0', true );
 		
 			// Enqueue the plugin styles
-			wp_enqueue_style( $this->prefix . 'css', plugin_dir_url( __FILE__ ) . 'css/editorial-statistics.css', false, '1.0' );
-			wp_enqueue_style( 'jquery.ui.theme', plugin_dir_url( __FILE__ ) . 'css/jquery-ui/jquery-ui-1.10.3.custom.css', false, '1.10.3' );
+			wp_enqueue_style( $this->prefix . 'css', $plugin_url . 'css/editorial-statistics.css', false, '1.0' );
+			wp_enqueue_style( 'jquery.ui.theme', $plugin_url . 'css/jquery-ui/jquery-ui-1.10.3.custom.css', false, '1.10.3' );
 		
 			// Include the jquery datepicker for the report date range
 			wp_enqueue_script( 'jquery-ui-datepicker' );
